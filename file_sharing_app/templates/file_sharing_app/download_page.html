@@ -33,7 +33,7 @@
                 ⚠️ Note: The file will be permanently deleted from the server immediately after the limit is reached.
             </p>
             
-            <a href="?action=download" class="btn" style="display: inline-block; margin-top: 10px; text-decoration: none; width: 100%; box-sizing: border-box;">
+            <a href="{% url 'execute_download' shared_file.id %}" class="btn" style="display: inline-block; margin-top: 10px; text-decoration: none; width: 100%; box-sizing: border-box;">
                 ⬇️ Download Now
             </a>
         </div>
