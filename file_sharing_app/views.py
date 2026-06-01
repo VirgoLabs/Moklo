@@ -46,43 +46,17 @@ def home(request):
     return render(request, 'file_sharing_app/home.html')
 
 
-def download_file(request, file_id):    
+def download_page(request, file_id):
+    """Handles displaying the landing page"""
     try:
         shared_file = SharedFile.objects.get(id=file_id)
     except SharedFile.DoesNotExist:
         return render(request, 'file_sharing_app/expired.html', status=404)
     
-    # Check Expiration
     if shared_file.is_expired():
         shared_file.delete()
         return render(request, 'file_sharing_app/expired.html', status=410)
-    
-    # Handle Download Click
-    if request.GET.get('action') == 'download':
-        raw_link = shared_file.file_url
         
-        # --- THE FIX: Guard Clause to prevent NoReverseMatch ---
-        if not raw_link:
-            return HttpResponse("Error: This file is missing its Cloudinary URL in the database.", status=404)
-        
-        # Inject 'fl_attachment' into the URL to force download
-        if '/upload/' in raw_link:
-            cloudinary_link = raw_link.replace('/upload/', '/upload/fl_attachment/')
-        else:
-            cloudinary_link = raw_link
-        
-        # Increment download count
-        shared_file.current_downloads += 1
-        
-        if shared_file.current_downloads >= shared_file.max_downloads:
-            shared_file.delete()
-        else:
-            shared_file.save()
-            
-        # Redirect safely!
-        return redirect(cloudinary_link)
-    
-    # Show the landing page
     downloads_remaining = shared_file.max_downloads - shared_file.current_downloads
     context = {
         'shared_file': shared_file,
@@ -90,6 +64,35 @@ def download_file(request, file_id):
         'downloads_remaining': downloads_remaining 
     }
     return render(request, 'file_sharing_app/download_page.html', context)
+
+
+def execute_download(request, file_id):
+    """Handles the actual redirect and database decrement"""
+    shared_file = get_object_or_404(SharedFile, id=file_id)
+
+    if shared_file.is_expired():
+        shared_file.delete()
+        return render(request, 'file_sharing_app/expired.html', status=410)
+
+    raw_link = shared_file.file_url
+    
+    if not raw_link:
+        return HttpResponse("Error: This file is missing its Cloudinary URL.", status=404)
+
+    if '/upload/' in raw_link:
+        cloudinary_link = raw_link.replace('/upload/', '/upload/fl_attachment/')
+    else:
+        cloudinary_link = raw_link
+
+    # Increment download count
+    shared_file.current_downloads += 1
+    
+    if shared_file.current_downloads >= shared_file.max_downloads:
+        shared_file.delete()
+    else:
+        shared_file.save()
+        
+    return redirect(cloudinary_link)
 
 def how_it_works(request):
     return render(request, 'file_sharing_app/how_it_works.html')
