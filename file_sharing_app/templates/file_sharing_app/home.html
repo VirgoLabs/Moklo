@@ -30,6 +30,12 @@
             <form method="post" enctype="multipart/form-data" class="upload-form" id="uploadForm">
                 {% csrf_token %}
 
+                {% if error %}
+                <div style="width: 100%; padding: 10px; background-color: #fef2f2; border: 1px solid #fecaca; color: #ef4444; border-radius: 6px; margin-bottom: 15px; font-size: 10.5pt; font-weight: bold;">
+                    {{ error }}
+                </div>
+                {% endif %}
+
                 <input type="hidden" name="file_url" id="file_url">
                 <input type="hidden" name="file_name" id="file_name">
 
@@ -166,7 +172,7 @@
         <p>&copy; All rights reserved.</p>
     </footer>
 
-    <script src="{% static 'file_sharing_app/scripts.js' %}"></script>
+    <script src="{% static 'file_sharing_app/scripts.js' %}?v=3"></script>
 </body>
 
 </html>
