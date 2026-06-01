@@ -61,8 +61,11 @@ def download_file(request, file_id):
     if request.GET.get('action') == 'download':
         raw_link = shared_file.file_url
         
-        # --- NEW: Inject 'fl_attachment' into the URL ---
-        # This tells Cloudinary to force a download instead of displaying the image
+        # --- THE FIX: Guard Clause to prevent NoReverseMatch ---
+        if not raw_link:
+            return HttpResponse("Error: This file is missing its Cloudinary URL in the database.", status=404)
+        
+        # Inject 'fl_attachment' into the URL to force download
         if '/upload/' in raw_link:
             cloudinary_link = raw_link.replace('/upload/', '/upload/fl_attachment/')
         else:
@@ -75,11 +78,8 @@ def download_file(request, file_id):
             shared_file.delete()
         else:
             shared_file.save()
-        
-        # for debugging the vercel log error
-        print("CLOUDINARY URL:", shared_file.file_url)
-
-        # Redirect to the new attachment-enabled URL
+            
+        # Redirect safely!
         return redirect(cloudinary_link)
     
     # Show the landing page
