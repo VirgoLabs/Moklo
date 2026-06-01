@@ -77,7 +77,7 @@ def download_file(request, file_id):
             shared_file.save()
         
         # for debugging the vercel log error
-        print("CLOUDINARY URL:", shared_file.cloudinary_url)
+        print("CLOUDINARY URL:", shared_file.file_url)
 
         # Redirect to the new attachment-enabled URL
         return redirect(cloudinary_link)
