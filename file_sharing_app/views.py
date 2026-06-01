@@ -10,6 +10,14 @@ def home(request):
         file_url = request.POST.get('file_url')
         file_name = request.POST.get('file_name')
         
+        # --- NEW: VALIDATION GUARD ---
+        # If the Cloudinary upload failed, the URL will be empty. Don't save it!
+        if not file_url or not file_name:
+            # You can pass an error flag to show an alert on the frontend
+            return render(request, 'file_sharing_app/home.html', {
+                'error': 'Upload failed. Please try again.'
+            })
+        
         # Grab custom expiry days
         try:
             expiry_days = int(request.POST.get('expiry_days', 1))
@@ -24,7 +32,7 @@ def home(request):
             
         custom_expiry = timezone.now() + timedelta(days=expiry_days)
 
-        # Create file record with the Cloudinary URL
+        # Create file record ONLY if validation passed
         new_file = SharedFile.objects.create(
             file_url=file_url, 
             file_name=file_name,
@@ -67,7 +75,6 @@ def download_page(request, file_id):
 
 
 def execute_download(request, file_id):
-    """Handles the actual redirect and database decrement"""
     shared_file = get_object_or_404(SharedFile, id=file_id)
 
     if shared_file.is_expired():
@@ -76,8 +83,9 @@ def execute_download(request, file_id):
 
     raw_link = shared_file.file_url
     
+    # --- UPGRADED: Render the expired template instead of plain text ---
     if not raw_link:
-        return HttpResponse("Error: This file is missing its Cloudinary URL.", status=404)
+        return render(request, 'file_sharing_app/expired.html', status=404)
 
     if '/upload/' in raw_link:
         cloudinary_link = raw_link.replace('/upload/', '/upload/fl_attachment/')
